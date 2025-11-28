@@ -1,0 +1,18 @@
+[
+  {
+    "transaction_id": "8ce1ad5d-c29b-4cab-8822-613e9275568b",
+    "timestamp": "2025-11-28T16:29:30.805328",
+    "status": "APPROVED",
+    "reason": "Payment successful",
+    "card_last4": "1111",
+    "amount": 50.0
+  },
+  {
+    "transaction_id": "6420bbc9-4003-4642-8213-8124b8918a27",
+    "timestamp": "2025-11-28T16:30:36.433154",
+    "status": "DECLINED",
+    "reason": "Insufficient funds",
+    "card_last4": "1111",
+    "amount": 500000.0
+  }
+]
