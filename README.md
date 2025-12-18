@@ -145,7 +145,7 @@ VENDOR DECRYPTION → USER NOTIFICATION
 
 ## 📁 Project Structure
 
-![Project Structure](project-structure.png)
+![Project Structure](Project-Structure.png)
 
 
 ## 🧪 Testing
