@@ -84,7 +84,7 @@ class ModernButton(tk.Canvas):
 
 
 class ModernEntry(tk.Canvas):
-    def __init__(self, parent, placeholder="", width=300, height=45, show=''):
+    def __init__(self, parent, placeholder="", width=300, height=45, show='', state='normal'):
         super().__init__(parent, width=width, height=height, bg='#1a2942', 
                         highlightthickness=0)
         
@@ -92,17 +92,25 @@ class ModernEntry(tk.Canvas):
         self.height = height
         self.show = show
         self.placeholder = placeholder
+        self.is_disabled = state == 'disabled'
         
         # Create rounded rectangle background
+        fill_color = '#0a1628' if self.is_disabled else '#0f1d33'
+        text_color = '#6c7a8f' if self.is_disabled else '#00d9ff'
+        
         self.create_rounded_rect(2, 2, width-2, height-2, 8, 
-                               fill='#0f1d33', outline='#2d3e5f', width=2)
+                               fill=fill_color, outline='#2d3e5f', width=2)
         
         # Create entry widget
         self.entry = tk.Entry(self, font=('Segoe UI', 11),
-                             bg='#0f1d33', fg='#00d9ff',
+                             bg=fill_color, fg=text_color,
                              insertbackground='#00d9ff',
                              bd=0, show=show,
-                             relief=tk.FLAT)
+                             relief=tk.FLAT,
+                             state=state,
+                             disabledbackground=fill_color,    # Fix white overlay
+                             disabledforeground=text_color,    # Fix white overlay
+                             readonlybackground=fill_color)    # Alternative fix
         
         # Position entry inside canvas
         self.create_window(width//2, height//2, window=self.entry, width=width-20)
@@ -120,19 +128,42 @@ class ModernEntry(tk.Canvas):
         return self.rect
     
     def on_focus_in(self, e):
-        self.itemconfig(self.rect, outline='#00d9ff', width=2)
+        if not self.is_disabled:
+            self.itemconfig(self.rect, outline='#00d9ff', width=2)
     
     def on_focus_out(self, e):
-        self.itemconfig(self.rect, outline='#2d3e5f', width=2)
+        if not self.is_disabled:
+            self.itemconfig(self.rect, outline='#2d3e5f', width=2)
     
     def get(self):
         return self.entry.get()
     
     def delete(self, start, end):
-        self.entry.delete(start, end)
+        if not self.is_disabled:
+            self.entry.delete(start, end)
     
     def insert(self, index, string):
-        self.entry.insert(index, string)
+        if not self.is_disabled:
+            self.entry.insert(index, string)
+    
+    def config(self, **kwargs):
+        if 'state' in kwargs:
+            self.is_disabled = kwargs['state'] == 'disabled'
+            self.entry.config(state=kwargs['state'])
+            fill_color = '#0a1628' if self.is_disabled else '#0f1d33'
+            text_color = '#6c7a8f' if self.is_disabled else '#00d9ff'
+            
+            # Update entry colors
+            self.entry.config(
+                bg=fill_color,
+                fg=text_color,
+                disabledbackground=fill_color,    # Fix white overlay
+                disabledforeground=text_color,    # Fix white overlay
+                readonlybackground=fill_color     # Alternative fix
+            )
+            
+            # Update canvas rectangle
+            self.itemconfig(self.rect, fill=fill_color)
 
 
 class VendorPaymentGUI:
@@ -143,6 +174,10 @@ class VendorPaymentGUI:
         self.root.configure(bg='#0a1628')
         
         self.processor = PaymentProcessor()
+        self.current_token = None  # Track if using a tokenized card
+        self.current_real_card_number = None  # Store real card number when using token
+        self.current_expiry = None  # Store expiry when using token
+        
         self.setup_gui()
         self.start_status_monitor()
     
@@ -239,7 +274,7 @@ class VendorPaymentGUI:
         checkbox_frame.pack(fill=tk.X, pady=(8, 0))
         
         self.save_token_var = tk.BooleanVar(value=True)
-        check = tk.Checkbutton(checkbox_frame, 
+        self.save_checkbox = tk.Checkbutton(checkbox_frame, 
                               text="Save card for future payments", 
                               variable=self.save_token_var,
                               bg='#1a2942', fg='#8a9ab0',
@@ -247,16 +282,21 @@ class VendorPaymentGUI:
                               activeforeground='#00d9ff',
                               selectcolor='#0f1d33',
                               font=('Segoe UI', 10))
-        check.pack(anchor='w')
+        self.save_checkbox.pack(anchor='w')
         
-        # Submit Button
+        # Submit and New Payment Buttons
         button_frame = tk.Frame(form_frame, bg='#1a2942')
         button_frame.pack(fill=tk.X, padx=20, pady=(10, 15))
         
-        submit_btn = ModernButton(button_frame, "🚀 Process Payment", 
-                                 self.process_payment, bg_color="#3fe363", 
-                                 width=300, height=50)
-        submit_btn.pack()
+        self.submit_btn = ModernButton(button_frame, "🚀 Process Payment", 
+                                      self.process_payment, bg_color="#3fe363", 
+                                      width=250, height=50)
+        self.submit_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        self.new_payment_btn = ModernButton(button_frame, "🆕 New Payment", 
+                                           self.reset_form_for_new_payment, 
+                                           bg_color='#00d9ff', width=200, height=50)
+        self.new_payment_btn.pack(side=tk.LEFT)
     
     def create_token_section(self, parent):
         token_frame = tk.Frame(parent, bg='#1a2942', highlightbackground='#2d3e5f',
@@ -333,27 +373,47 @@ class VendorPaymentGUI:
     def process_payment(self):
         # Get form data
         card_data = {
-            'number': self.card_entry.get().strip(),
-            'expiry': self.expiry_entry.get().strip(),
+            'number': '',
+            'expiry': '',
             'cvv': self.cvv_entry.get().strip(),
             'amount': self.amount_entry.get().strip(),
-            'save_token': self.save_token_var.get()
+            'save_token': self.save_token_var.get() if not self.current_token else False
         }
         
+        # Check if using token or manual entry
+        if self.current_token:
+            # Using token - use stored real card data
+            card_data['number'] = self.current_real_card_number
+            card_data['expiry'] = self.current_expiry
+        else:
+            # Manual entry - get from form fields
+            card_data['number'] = self.card_entry.get().strip()
+            card_data['expiry'] = self.expiry_entry.get().strip()
+        
         # Validate input
-        if not all([card_data['number'], card_data['expiry'], 
-                   card_data['cvv'], card_data['amount']]):
-            messagebox.showerror("Error", "Please fill all fields!")
+        if not all([card_data['cvv'], card_data['amount']]):
+            messagebox.showerror("Error", "Please enter CVV and amount!")
+            return
+        
+        if not self.current_token and not card_data['number']:
+            messagebox.showerror("Error", "Please enter card number or use saved card!")
+            return
+        
+        if not self.current_token and not card_data['expiry']:
+            messagebox.showerror("Error", "Please enter expiry date!")
             return
         
         # Process in background
         threading.Thread(target=self._process_payment_thread, 
-                        args=(card_data,), daemon=True).start()
+                        args=(card_data, self.current_token,), daemon=True).start()
+        
+        # Reset form after processing
+        self.root.after(1000, self.reset_form_for_new_payment)
     
-    def _process_payment_thread(self, card_data):
+    def _process_payment_thread(self, card_data, token=None):
         try:
-            result = self.processor.process_payment(card_data)
-            self.update_status(f"✅ Payment Result: {result}")
+            result = self.processor.process_payment(card_data, token)
+            self.update_status(f"📱 {result}")
         except Exception as e:
             self.update_status(f"❌ Payment Failed: {str(e)}")
     
@@ -363,14 +423,84 @@ class VendorPaymentGUI:
             messagebox.showwarning("Warning", "Please select a saved card!")
             return
         
-        token = self.token_listbox.get(selection[0]).split(' - ')[0]
+        # Get token from selection
+        selected_text = self.token_listbox.get(selection[0])
+        token = selected_text.split(' - ')[0]
+        
         try:
+            # Get partial card data (NO CVV!)
             card_data = self.processor.get_card_from_token(token)
+            
+            # Show security information
+            info_message = (
+                "🔒 SECURE TOKEN PAYMENT\n\n"
+                f"Card: {card_data['masked']}\n"
+                f"Expiry: {card_data['expiry']}\n\n"
+                "⚠️  SECURITY FEATURES:\n"
+                "• CVV NOT stored with token\n"
+                "• Must enter CVV fresh each time\n"
+                "• Amount must be entered fresh\n"
+                "• Rate limiting protects against guessing\n\n"
+                "Please enter CVV and amount to continue."
+            )
+            messagebox.showinfo("Using Saved Card", info_message)
+            
+            # Clear all fields first
             self.card_entry.delete(0, tk.END)
-            self.card_entry.insert(0, f"**** **** **** {card_data['number'][-4:]}")
-            self.update_status(f"🔐 Using tokenized card: {token}")
+            self.expiry_entry.delete(0, tk.END)
+            self.cvv_entry.delete(0, tk.END)
+            self.amount_entry.delete(0, tk.END)
+            
+            # Fill only safe fields
+            self.card_entry.insert(0, card_data['masked'])  # Masked number only
+            self.expiry_entry.insert(0, card_data['expiry'])  # Expiry is safe
+            
+            # CVV and Amount remain EMPTY - user must enter fresh!
+            
+            # Store token AND real card data for processing
+            self.current_token = token
+            self.current_real_card_number = card_data['number']  # Store REAL card number!
+            self.current_expiry = card_data['expiry']  # Store expiry
+            
+            # Disable editing of card and expiry fields when using token
+            self.card_entry.config(state='disabled')
+            self.expiry_entry.config(state='disabled')
+            
+            # Disable save token checkbox when using token
+            self.save_checkbox.config(state='disabled')
+            self.save_token_var.set(False)
+            
+            # Focus on CVV field for user convenience
+            self.cvv_entry.focus_set()
+            
+            self.update_status(f"🔐 Token loaded: {card_data['masked']}")
+            
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load card: {str(e)}")
+    
+    def reset_form_for_new_payment(self):
+        """Reset form for a new payment"""
+        # Re-enable all fields
+        self.card_entry.config(state='normal')
+        self.expiry_entry.config(state='normal')
+        
+        # Re-enable save token checkbox
+        self.save_checkbox.config(state='normal')
+        self.save_token_var.set(True)
+        
+        # Clear all fields
+        self.card_entry.delete(0, tk.END)
+        self.expiry_entry.delete(0, tk.END)
+        self.cvv_entry.delete(0, tk.END)
+        self.amount_entry.delete(0, tk.END)
+        
+        # Reset token and stored card data
+        self.current_token = None
+        self.current_real_card_number = None
+        self.current_expiry = None
+        
+        # Update status
+        self.update_status("🆕 Ready for new payment")
     
     def load_tokens(self):
         self.token_listbox.delete(0, tk.END)

@@ -2,19 +2,31 @@ import json
 import hashlib
 import uuid
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 class TokenManager:
     def __init__(self, tokens_file: str = "vendor/data/tokens.json"):
         self.tokens_file = tokens_file
         self.tokens = self._load_tokens()
     
-    def _load_tokens(self) -> Dict[str, str]:
+    def _load_tokens(self) -> Dict[str, Dict[str, Any]]:
         """Load tokens from JSON file"""
         try:
             with open(self.tokens_file, 'r') as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+                data = json.load(f)
+                # Check if data is in new format
+                if data and isinstance(next(iter(data.values())), dict):
+                    return data
+                else:
+                    # Convert old format to new format
+                    new_data = {}
+                    for token, card_number in data.items():
+                        new_data[token] = {
+                            'card_number': card_number,
+                            'masked': f"**** **** **** {card_number[-4:]}"
+                        }
+                    return new_data
+        except (FileNotFoundError, json.JSONDecodeError, StopIteration):
             return {}
     
     def _save_tokens(self):
@@ -22,11 +34,12 @@ class TokenManager:
         with open(self.tokens_file, 'w') as f:
             json.dump(self.tokens, f, indent=2)
     
-    def generate_token(self, card_number: str) -> str:
+    def generate_token(self, card_data: Dict[str, str]) -> str:
         """
-        Generate a secure token for card number
-        Uses SHA-256 with salt and timestamp for uniqueness
+        Generate a secure token for card data
+        Store ONLY card number and expiry - NEVER CVV!
         """
+        card_number = card_data['number']
         salt = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
         token_data = f"{card_number}{salt}{timestamp}"
@@ -34,14 +47,19 @@ class TokenManager:
         # Generate token (first 16 chars of hash)
         token = hashlib.sha256(token_data.encode()).hexdigest()[:16]
         
-        # Store the mapping
-        self.tokens[token] = card_number
+        # Store ONLY safe data (never CVV!)
+        self.tokens[token] = {
+            'card_number': card_number,
+            'expiry': card_data['expiry'],  # Only expiry, not CVV!
+            'masked': f"**** **** **** {card_number[-4:]}",
+            'created_at': timestamp
+        }
         self._save_tokens()
         
         return token
     
-    def get_card_number(self, token: str) -> Optional[str]:
-        """Retrieve card number from token"""
+    def get_card_data(self, token: str) -> Optional[Dict[str, Any]]:
+        """Retrieve safe card data from token (NO CVV!)"""
         return self.tokens.get(token)
     
     def validate_token(self, token: str) -> bool:
@@ -59,9 +77,8 @@ class TokenManager:
     def get_all_tokens(self) -> Dict[str, str]:
         """Get all tokens with masked card numbers"""
         masked_tokens = {}
-        for token, card_number in self.tokens.items():
-            masked_card = f"**** **** **** {card_number[-4:]}" if len(card_number) >= 4 else "****"
-            masked_tokens[token] = masked_card
+        for token, card_data in self.tokens.items():
+            masked_tokens[token] = card_data.get('masked', '**** **** **** ****')
         return masked_tokens
     
     def token_count(self) -> int:

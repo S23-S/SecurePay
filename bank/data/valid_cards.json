@@ -13,14 +13,26 @@
   },
   "340000000000009": {
     "expiry": "09/26",
-    "balance": 1350.0,
+    "balance": 1300.0,
     "cardholder": "Bob Wilson",
     "type": "American Express"
   },
   "6011000000000004": {
     "expiry": "03/25",
-    "balance": 750.0,
+    "balance": 390.0,
     "cardholder": "Alice Brown",
     "type": "Discover"
+  },
+  "6060123456789012": {
+    "expiry": "12/25",
+    "balance": 1000.0,
+    "cardholder": "Test Fraud Card 1",
+    "type": "Risky Issuer"
+  },
+  "5110987654321098": {
+    "expiry": "12/25",
+    "balance": 1000.0,
+    "cardholder": "Test Fraud Card 2",
+    "type": "Risky Issuer"
   }
 }
