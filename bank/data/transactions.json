@@ -1,18 +1,18 @@
 [
   {
-    "transaction_id": "8ce1ad5d-c29b-4cab-8822-613e9275568b",
-    "timestamp": "2025-11-28T16:29:30.805328",
+    "transaction_id": "5c6dd761-3fd1-41d1-a798-504dcb49f766",
+    "timestamp": "2025-12-18T18:45:53.219344",
     "status": "APPROVED",
     "reason": "Payment successful",
-    "card_last4": "1111",
-    "amount": 50.0
+    "card_last4": "0009",
+    "amount": 150.0
   },
   {
-    "transaction_id": "6420bbc9-4003-4642-8213-8124b8918a27",
-    "timestamp": "2025-11-28T16:30:36.433154",
+    "transaction_id": "d9bad88c-fde8-413a-a9b7-5ab255f8ffaf",
+    "timestamp": "2025-12-18T18:47:30.232527",
     "status": "DECLINED",
     "reason": "Insufficient funds",
-    "card_last4": "1111",
-    "amount": 500000.0
+    "card_last4": "0009",
+    "amount": 2500.0
   }
 ]
