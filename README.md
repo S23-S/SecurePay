@@ -146,43 +146,44 @@ VENDOR DECRYPTION → USER NOTIFICATION
 ## 📁 Project Structure
 
 SECUREPAY/
-├── bank/ # Bank system components
-│ ├── data/ # Bank data storage
-│ │ ├── valid_cards.json
-│ │ └── transactions.json
-│ ├── init.py
-│ ├── bank_app.py # Bank main application
-│ ├── bank_gui.py # Bank monitoring interface
-│ ├── card_verifier.py # Card validation logic
-│ └── transaction_manager.py # Core transaction processing
 │
-├── vendor/ # Vendor system components
-│ ├── data/ # Vendor data storage
-│ │ ├── tokens.json
-│ │ └── payment_log.json
-│ ├── init.py
-│ ├── vendor_app.py # Vendor main application
-│ ├── payment_gui.py # Vendor payment interface
-│ ├── payment_processor.py # Payment processing logic
-│ └── token_manager.py # Token management
+├── bank/                          # Bank system components
+│   ├── __init__.py 
+│   ├── bank_app.py                # Bank main application
+│   ├── bank_gui.py                # Bank monitoring interface
+│   ├── card_verifier.py           # Card validation logic
+│   ├── transaction_manager.py     # Core transaction processing
+│   └── data/                      # Bank data storage
+│       ├── valid_cards.json
+│       └── transactions.json
 │
-├── communication/ # Secure communication layer
-│ ├── init.py
-│ ├── message_bus.py # Message queue system
-│ ├── protocols.py # Message protocols
-│ └── communication_data/ # Message storage
-│ ├── bank_to_vendor.json
-│ └── vendor_to_bank.json
+├── vendor/                        # Vendor system components
+│   ├── __init__.py
+│   ├── vendor_app.py              # Vendor main application
+│   ├── payment_gui.py             # Vendor payment interface
+│   ├── payment_processor.py       # Payment processing logic
+│   ├── token_manager.py           # Token management
+│   └── data/                      # Vendor data storage
+│       ├── tokens.json
+│       └── payment_log.json
 │
-├── shared/ # Shared components
-│ ├── init.py
-│ ├── config.py # Configuration and validation
-│ ├── encryption.py # Cryptography implementation
-│ └── key.key # Auto-generated encryption key
+├── shared/                        # Shared utilities & security
+│   ├── __init__.py
+│   ├── config.py                  # Configuration & validation
+│   ├── encryption.py              # Cryptography implementation
+│   └── key.key                    # Auto-generated encryption key
 │
-├── requirements.txt # Python dependencies
-├── run_securepay.py # System launcher
-└── README.md # This file
+├── communication/                 # Secure communication layer
+│   ├── __init__.py
+│   ├── message_bus.py             # Message queue system
+│   ├── protocols.py               # Message formats & rules
+│   └── communication_data/        # Message storage
+│       ├── bank_to_vendor.json
+│       └── vendor_to_bank.json
+│  
+├── run_securepay.py               # System launcher
+├── requirements.txt               # Python dependencies
+├── README.md                      # Project documentation
 
 
 ## 🧪 Testing
