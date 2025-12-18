@@ -145,7 +145,7 @@ VENDOR DECRYPTION → USER NOTIFICATION
 
 ## 📁 Project Structure
 
-![Project Structure](SecurePay\Files Structure.png)
+![Project Structure](project-structure.png)
 
 
 ## 🧪 Testing
