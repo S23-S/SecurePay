@@ -147,8 +147,26 @@ VENDOR DECRYPTION → USER NOTIFICATION
 
 SECUREPAY/
 │
+├── run_securepay.py               # System launcher
+├── requirements.txt               # Python dependencies
+├── README.md                      # Project documentation
+│
+├── shared/                        # Shared utilities & security
+│   ├── __init__.py
+│   ├── config.py                  # Configuration & validation
+│   ├── encryption.py              # Cryptography implementation
+│   └── key.key                    # Auto-generated encryption key
+│
+├── communication/                 # Secure communication layer
+│   ├── __init__.py
+│   ├── message_bus.py             # Message queue system
+│   ├── protocols.py               # Message formats & rules
+│   └── communication_data/        # Message storage
+│       ├── bank_to_vendor.json
+│       └── vendor_to_bank.json
+│
 ├── bank/                          # Bank system components
-│   ├── __init__.py 
+│   ├── __init__.py
 │   ├── bank_app.py                # Bank main application
 │   ├── bank_gui.py                # Bank monitoring interface
 │   ├── card_verifier.py           # Card validation logic
@@ -166,24 +184,6 @@ SECUREPAY/
 │   └── data/                      # Vendor data storage
 │       ├── tokens.json
 │       └── payment_log.json
-│
-├── shared/                        # Shared utilities & security
-│   ├── __init__.py
-│   ├── config.py                  # Configuration & validation
-│   ├── encryption.py              # Cryptography implementation
-│   └── key.key                    # Auto-generated encryption key
-│
-├── communication/                 # Secure communication layer
-│   ├── __init__.py
-│   ├── message_bus.py             # Message queue system
-│   ├── protocols.py               # Message formats & rules
-│   └── communication_data/        # Message storage
-│       ├── bank_to_vendor.json
-│       └── vendor_to_bank.json
-│  
-├── run_securepay.py               # System launcher
-├── requirements.txt               # Python dependencies
-├── README.md                      # Project documentation
 
 
 ## 🧪 Testing
