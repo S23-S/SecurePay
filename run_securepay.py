@@ -44,7 +44,7 @@ def main():
         # Start Vendor system
         vendor_process = subprocess.Popen([sys.executable, "vendor/vendor_app.py"])
         
-        print("\n✅ Both systems started!")
+        print("✅ Both systems started!")
         print("💡 Close both windows to stop the systems")
         
         # Wait for processes
@@ -93,6 +93,18 @@ def create_sample_data():
                 "balance": 750.0,
                 "cardholder": "Alice Brown",
                 "type": "Discover"
+            },
+            "6060123456789012": {
+                "expiry": "12/25",
+                "balance": 1000.0,
+                "cardholder": "Test Fraud Card 1",
+                "type": "Risky Issuer"
+            },
+            "5110987654321098": {
+                "expiry": "12/25",
+                "balance": 1000.0,
+                "cardholder": "Test Fraud Card 2",
+                "type": "Risky Issuer"
             }
         }
         with open(valid_cards_file, 'w') as f:
