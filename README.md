@@ -102,6 +102,14 @@ This launches both Vendor and Bank interfaces automatically.
 - Use sample card: `4111111111111111`
 - Expiry: `12/25`, CVV: `123`, Amount: `100`
 
+        # In a real system, you would validate against a secure vault
+        # For demo purposes, we'll simulate validation
+        # (In production, NEVER store or compare CVV like this!)
+        
+        # Simulate CVV validation - in reality, this would come from a secure source
+        # For demo, we'll say any 3-digit number ending with '3' is valid
+        is_valid = len(cvv) == 3 and cvv.isdigit() and cvv[-1] == '3'
+
 3. **Monitor transactions:**
 - Bank GUI shows real-time transaction processing
 - Both systems log activities
@@ -156,9 +164,9 @@ Use these test cards from the sample data:
 | Card Number      | Expiry | CVV | Balance   | Type             |
 |------------------|--------|-----|-----------|------------------|
 | 4111111111111111 | 12/25  | 123 | $1000.00  | Visa             |
-| 5500000000000004 | 06/24  | 456 | $500.00   | Mastercard       |
-| 340000000000009  | 09/26  | 789 | $1500.00  | American Express |
-| 6011000000000004 | 03/25  | 012 | $750.00   | Discover         |
+| 5500000000000004 | 06/24  | 573 | $500.00   | Mastercard       |
+| 340000000000009  | 09/26  | 693 | $1500.00  | American Express |
+| 6011000000000004 | 03/25  | 713 | $750.00   | Discover         |
 
 
 ### Testing Scenarios
